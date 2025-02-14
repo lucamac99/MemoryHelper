@@ -14,9 +14,13 @@ struct PersistenceController {
     static let preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
         let viewContext = result.container.viewContext
-        for _ in 0..<10 {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
+        for i in 0..<10 {
+            let newEntry = MemoryEntry(context: viewContext)
+            newEntry.id = UUID()
+            newEntry.date = Date()
+            newEntry.type = ["note", "rating", "event"][i % 3]
+            newEntry.note = "Sample note \(i)"
+            newEntry.dayRating = Int16(Int.random(in: 1...100))
         }
         do {
             try viewContext.save()
