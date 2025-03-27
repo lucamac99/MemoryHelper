@@ -19,17 +19,23 @@ struct LandingView: View {
                 }
                 .tag(1)
             
+            MemoryExercisesView()
+                .tabItem {
+                    Label("Training", systemImage: "brain.head.profile")
+                }
+                .tag(2)
+            
             StatisticsView()
                 .tabItem {
                     Label("Stats", systemImage: "chart.bar.fill")
                 }
-                .tag(2)
+                .tag(3)
             
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
                 }
-                .tag(3)
+                .tag(4)
         }
     }
 } 

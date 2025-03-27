@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @State private var showingAddEntry = false
+    @State private var selectedEntryType = "note"
     
     var body: some View {
         NavigationView {
@@ -12,7 +13,10 @@ struct HomeView: View {
                     HeaderView()
                     
                     // Quick Actions
-                    QuickActionsView(showingAddEntry: $showingAddEntry)
+                    QuickActionsView(
+                        showingAddEntry: $showingAddEntry,
+                        selectedEntryType: $selectedEntryType
+                    )
                     
                     // Daily Stats
                     DailyStatsView()
@@ -24,7 +28,7 @@ struct HomeView: View {
             }
             .navigationTitle("Memory Helper")
             .sheet(isPresented: $showingAddEntry) {
-                AddEntryView()
+                AddEntryView(initialType: selectedEntryType)
             }
         }
     }
@@ -56,6 +60,7 @@ struct HeaderView: View {
 
 struct QuickActionsView: View {
     @Binding var showingAddEntry: Bool
+    @Binding var selectedEntryType: String
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -71,6 +76,7 @@ struct QuickActionsView: View {
                     systemImage: "note.text",
                     color: .blue
                 ) {
+                    selectedEntryType = "note"
                     showingAddEntry = true
                 }
                 
@@ -79,6 +85,7 @@ struct QuickActionsView: View {
                     systemImage: "star.fill",
                     color: .yellow
                 ) {
+                    selectedEntryType = "rating"
                     showingAddEntry = true
                 }
                 
@@ -87,15 +94,16 @@ struct QuickActionsView: View {
                     systemImage: "calendar",
                     color: .green
                 ) {
+                    selectedEntryType = "event"
                     showingAddEntry = true
                 }
                 
-                QuickActionButton(
-                    title: "Statistics",
-                    systemImage: "chart.bar.fill",
-                    color: .purple
-                ) {
-                    // Navigate to statistics
+                NavigationLink(destination: StatisticsView()) {
+                    QuickActionButtonContent(
+                        title: "Statistics",
+                        systemImage: "chart.bar.fill",
+                        color: .purple
+                    )
                 }
             }
         }
@@ -103,6 +111,28 @@ struct QuickActionsView: View {
         .background(RoundedRectangle(cornerRadius: 15)
             .fill(Color(.systemBackground))
             .shadow(color: .gray.opacity(0.2), radius: 5))
+    }
+}
+
+struct QuickActionButtonContent: View {
+    let title: String
+    let systemImage: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.title2)
+                .foregroundColor(color)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.primary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(RoundedRectangle(cornerRadius: 12)
+            .fill(color.opacity(0.1)))
     }
 }
 
@@ -114,19 +144,11 @@ struct QuickActionButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .font(.title2)
-                    .foregroundColor(color)
-                
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.primary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(RoundedRectangle(cornerRadius: 12)
-                .fill(color.opacity(0.1)))
+            QuickActionButtonContent(
+                title: title,
+                systemImage: systemImage,
+                color: color
+            )
         }
     }
 } 

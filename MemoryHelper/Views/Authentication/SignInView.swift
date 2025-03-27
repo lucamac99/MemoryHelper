@@ -22,6 +22,11 @@ struct SignInView: View {
                         .scaledToFit()
                         .frame(width: 120, height: 120)
                         .padding(.top, 40)
+                        .shadow(color: .gray.opacity(0.2), radius: 10, x: 0, y: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 30)
+                                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                        )
                     
                     Text("Memory Helper")
                         .font(.system(size: 32, weight: .bold))
