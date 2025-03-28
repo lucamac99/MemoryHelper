@@ -82,20 +82,20 @@ struct AttentionFocusExerciseView: View {
                 .font(.title)
                 .fontWeight(.bold)
             
-            VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text("How to Play:")
                     .font(.headline)
                 
-                Text("1. Remember the target symbols that appear on screen")
-                    .multilineTextAlignment(.leading)
-                
-                Text("2. After a brief distraction, select all the symbols you saw")
-                    .multilineTextAlignment(.leading)
-                
-                Text("3. Each correct answer earns points, incorrect selections lose points")
-                    .multilineTextAlignment(.leading)
+                VStack(alignment: .leading, spacing: 12) {
+                    InstructionRow(number: 1, text: "Remember the target symbols that appear on screen")
+                    
+                    InstructionRow(number: 2, text: "After a brief distraction, select all the symbols you saw")
+                    
+                    InstructionRow(number: 3, text: "Each correct answer earns points, incorrect selections lose points")
+                }
             }
             .padding()
+            .frame(maxWidth: .infinity)
             .background(Color(.systemGray6).opacity(0.7))
             .cornerRadius(12)
             .padding(.horizontal)
@@ -333,8 +333,6 @@ class AttentionFocusViewModel: ObservableObject {
         correctSelections = 0
         incorrectSelections = 0
         isHighScore = false
-        
-        startTimer()
     }
     
     func startTimer() {
@@ -359,6 +357,7 @@ class AttentionFocusViewModel: ObservableObject {
     func handleActionButton() {
         switch gameState {
         case .intro:
+            startTimer()
             startRound()
         case .showTarget, .showDistraction:
             // Button is disabled during these states
@@ -372,7 +371,6 @@ class AttentionFocusViewModel: ObservableObject {
                 startRound()
             }
         case .finished:
-            // Save progress and update high score
             saveProgress()
         }
     }
@@ -523,5 +521,24 @@ class AttentionFocusViewModel: ObservableObject {
 extension Array {
     subscript(safe index: Index) -> Element? {
         return indices.contains(index) ? self[index] : nil
+    }
+}
+
+// Add this helper view for consistent instruction formatting
+struct InstructionRow: View {
+    let number: Int
+    let text: String
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("\(number).")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .frame(width: 20, alignment: .leading)
+            
+            Text(text)
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }

@@ -4,6 +4,10 @@ import Charts
 struct MemoryProgressView: View {
     @ObservedObject private var progressManager = ExerciseProgressManager.shared
     @State private var selectedChartType: ChartType = .byExercise
+    @Environment(\.presentationMode) private var presentationMode
+    
+    // Add environment object to access tab selection from LandingView
+    @EnvironmentObject private var tabSelection: TabSelectionManager
     
     enum ChartType: String, CaseIterable {
         case byExercise = "By Exercise"
@@ -80,6 +84,12 @@ struct MemoryProgressView: View {
             .padding(.vertical)
         }
         .navigationTitle("Progress")
+        .onChange(of: tabSelection.selectedTab) { newValue in
+            // When the user taps the "Training" tab (index 2), dismiss this view to go back
+            if newValue == 2 {
+                presentationMode.wrappedValue.dismiss()
+            }
+        }
     }
     
     private var totalExercisesCompleted: Int {
@@ -458,4 +468,11 @@ struct CategoryBreakdownView: View {
         
         var id: String { category.rawValue }
     }
+}
+
+// Add this class to manage tab selection
+class TabSelectionManager: ObservableObject {
+    @Published var selectedTab: Int = 0
+    
+    static let shared = TabSelectionManager()
 } 

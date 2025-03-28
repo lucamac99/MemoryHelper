@@ -1,5 +1,14 @@
 import SwiftUI
 
+// Add this structure definition before the PatternSequenceExerciseView
+struct RoundScoreDetails {
+    let correctAnswers: Int
+    let baseScore: Int
+    let bonusScore: Int
+    let totalScore: Int
+    let sequenceLength: Int
+}
+
 struct PatternSequenceExerciseView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var gameState: GameState = .ready
@@ -24,6 +33,9 @@ struct PatternSequenceExerciseView: View {
     let highlightDuration = 0.4 // seconds
     let pauseDuration = 0.3 // seconds between highlights
     let pulseInterval = 0.25 // seconds for each pulse
+    
+    @State private var lastRoundDetails: RoundScoreDetails?
+    @State private var roundScores: [RoundScoreDetails] = []
     
     enum GameState {
         case ready, showingSequence, inputting, feedback, finished
@@ -59,15 +71,7 @@ struct PatternSequenceExerciseView: View {
                     .font(.headline)
                     .foregroundColor(.orange)
             } else if gameState == .feedback {
-                if userSequence == sequence {
-                    Text("Correct!")
-                        .font(.headline)
-                        .foregroundColor(.green)
-                } else {
-                    Text("Incorrect")
-                        .font(.headline)
-                        .foregroundColor(.red)
-                }
+                feedbackView
             }
             
             // Pattern grid
@@ -151,10 +155,10 @@ struct PatternSequenceExerciseView: View {
                         }
                     }
                     
-                    // Show the current expected input vs user's actual input
-                    if !userSequence.isEmpty && userSequence.count <= sequence.count {
+                    // Show all numbers in scrollable view
+                    ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(0..<min(5, userSequence.count), id: \.self) { index in
+                            ForEach(0..<userSequence.count, id: \.self) { index in
                                 let isCorrect = index < sequence.count && userSequence[index] == sequence[index]
                                 
                                 Text("\(index + 1)")
@@ -163,16 +167,11 @@ struct PatternSequenceExerciseView: View {
                                     .frame(width: 20, height: 20)
                                     .background(
                                         Circle()
-                                            .stroke(isCorrect ? Color.green : Color.red, lineWidth: 1)
+                                            .stroke(isCorrect ? Color.green : .red, lineWidth: 1)
                                     )
                             }
-                            
-                            if userSequence.count > 5 {
-                                Text("...")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
                         }
+                        .padding(.horizontal, 4)
                     }
                 }
                 .padding(.top, 8)
@@ -212,7 +211,11 @@ struct PatternSequenceExerciseView: View {
             timers.forEach { $0.invalidate() }
         }
         .sheet(isPresented: $showingResults) {
-            PatternSequenceResultsView(score: score, maxScore: maxRounds * 100) {
+            PatternSequenceResultsView(
+                score: score, 
+                maxScore: maxRounds * 100,
+                roundScores: roundScores
+            ) {
                 dismiss()
             }
         }
@@ -222,22 +225,26 @@ struct PatternSequenceExerciseView: View {
         gameState = .ready
         round = 1
         score = 0
+        roundScores = [] // Clear all previous round scores
+        lastRoundDetails = nil // Reset last round details
         generateSequence()
         showSequence()
     }
     
     private func generateSequence() {
-        let sequenceLength = baseSequenceLength + (round - 1) / 2 // Increase length every 2 rounds
+        let sequenceLength: Int
+        switch round {
+        case 1, 2: sequenceLength = 3
+        case 3, 4: sequenceLength = 4
+        case 5, 6: sequenceLength = 5
+        case 7, 8: sequenceLength = 6
+        case 9, 10: sequenceLength = 7
+        default: sequenceLength = 3
+        }
         
-        // Create a sequence that might include repeating cells
         sequence = []
         for _ in 0..<sequenceLength {
-            // Intentionally add some repetition (25% chance to repeat if there's a previous cell)
-            if !sequence.isEmpty && Int.random(in: 0...3) == 0 {
-                sequence.append(sequence.last!) // Repeat the last cell
-            } else {
-                sequence.append(Int.random(in: 0..<cellCount))
-            }
+            sequence.append(Int.random(in: 0..<cellCount))
         }
         
         userSequence = []
@@ -348,32 +355,40 @@ struct PatternSequenceExerciseView: View {
     private func checkSequence() {
         gameState = .feedback
         
-        // Calculate score
-        let correct = userSequence == sequence
-        
-        // Base score calculation
-        let baseScore = correct ? 100 : 0
-        
-        // Add bonus points for longer sequences when correct
-        let sequenceBonus = correct ? min(sequence.count * 5, 50) : 0
-        
-        // Partial credit for partially correct sequences
-        var partialCredit = 0
-        if !correct {
-            // Count correct positions
-            var correctPositions = 0
-            for i in 0..<min(userSequence.count, sequence.count) {
-                if userSequence[i] == sequence[i] {
-                    correctPositions += 1
-                }
+        // Only calculate score if we haven't already done so for this round
+        // This prevents double-counting if checkSequence is called multiple times
+        if lastRoundDetails == nil || roundScores.count < round {
+            let roundScore = calculateRoundScore()
+            score += roundScore // Add this round's score to the total
+        }
+    }
+    
+    private func calculateRoundScore() -> Int {
+        // Count correct answers
+        var correctAnswers = 0
+        for i in 0..<sequence.count {
+            if i < userSequence.count && userSequence[i] == sequence[i] {
+                correctAnswers += 1
             }
-            
-            // Award partial credit based on how many positions were correct
-            partialCredit = Int(Double(correctPositions) / Double(sequence.count) * 50)
         }
         
-        let roundScore = baseScore + sequenceBonus + partialCredit
-        score += roundScore
+        // Calculate percentage: (correct answers / total sequence length) * 100
+        let percentage = Double(correctAnswers) / Double(sequence.count)
+        let roundScore = Int(Darwin.round(percentage * 100))
+        
+        // Store round details (no bonus points)
+        let details = RoundScoreDetails(
+            correctAnswers: correctAnswers,
+            baseScore: roundScore,
+            bonusScore: 0,
+            totalScore: roundScore,
+            sequenceLength: sequence.count
+        )
+        
+        lastRoundDetails = details
+        roundScores.append(details)
+        
+        return roundScore
     }
     
     private func nextRound() {
@@ -394,31 +409,126 @@ struct PatternSequenceExerciseView: View {
             return Color(.systemGray5)
         }
     }
-}
-
-struct PatternSequenceResultsView: View {
-    let score: Int
-    let maxScore: Int
-    let onDismiss: () -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var hasSubmitted = false
     
-    var percentageScore: Int {
-        return Int((Double(score) / Double(maxScore)) * 100)
-    }
-    
-    var feedbackMessage: String {
-        if percentageScore > 80 {
-            return "Excellent sequencing ability! Your working memory is impressive."
-        } else if percentageScore > 60 {
-            return "Good job! You show solid sequence memory skills."
-        } else {
-            return "Regular practice will help improve your sequence memory."
+    private var feedbackView: some View {
+        VStack(spacing: 8) {
+            if userSequence == sequence {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.green)
+                    
+                    Text("Correct")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+            } else {
+                HStack {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.red)
+                    
+                    Text("Incorrect")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+            }
+            
+            // Add detailed score information
+            if let details = lastRoundDetails {
+                VStack(alignment: .center, spacing: 4) {
+                    Text("Round \(round): \(details.totalScore) points")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Text("\(details.correctAnswers)/\(details.sequenceLength) correct")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Total score: \(score)")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .padding(.top, 2)
+                }
+                .padding(.vertical, 4)
+            }
         }
     }
     
+    private func finishExercise() {
+        // Calculate maximum possible score (perfect score in all rounds)
+        let maxPossibleScore = maxRounds * 100 // Base score for perfect performance
+        
+        ExerciseProgressManager.shared.recordExerciseCompletion(
+            exerciseId: "patternSequence",
+            score: score,
+            maxScore: maxPossibleScore
+        )
+        
+        showingResults = true
+    }
+    
+    // Add this helper method
+    private func runningTotal(upToRound round: Int) -> Int {
+        guard round > 0 && round <= roundScores.count else { return 0 }
+        return roundScores[0..<round].reduce(0) { $0 + $1.totalScore }
+    }
+    
+    private func verifyRunningTotal() -> Int {
+        // This should match the total score
+        return roundScores.reduce(0) { $0 + $1.totalScore }
+    }
+}
+
+// First, create a view for a single round's details
+struct RoundScoreRow: View {
+    let roundNumber: Int
+    let details: RoundScoreDetails
+    let runningTotal: Int
+    let isFinalRound: Bool
+    
     var body: some View {
-        VStack(spacing: 25) {
+        Text("Round \(roundNumber): \(details.correctAnswers)/\(details.sequenceLength) = \(details.totalScore) points \(isFinalRound ? "(Final: \(runningTotal))" : "(Total: \(runningTotal))")")
+            .font(.caption)
+            .foregroundColor(.secondary)
+    }
+}
+
+// Now simplify the RoundBreakdownView to use this component
+struct RoundBreakdownView: View {
+    let roundScores: [RoundScoreDetails]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Round Breakdown:")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .padding(.top, 4)
+            
+            ForEach(0..<roundScores.count, id: \.self) { index in
+                let details = roundScores[index]
+                let roundNum = index + 1
+                
+                // Calculate running total up to and including this round
+                let runningTotal = roundScores[0...index].reduce(0) { $0 + $1.totalScore }
+                
+                // Use the extracted component
+                RoundScoreRow(
+                    roundNumber: roundNum,
+                    details: details,
+                    runningTotal: runningTotal,
+                    isFinalRound: index == roundScores.count - 1
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 8)
+    }
+}
+
+struct ResultsHeaderView: View {
+    var body: some View {
+        VStack {
             Image(systemName: "arrow.left.arrow.right")
                 .font(.system(size: 60))
                 .foregroundColor(.orange)
@@ -427,30 +537,101 @@ struct PatternSequenceResultsView: View {
             Text("Exercise Complete!")
                 .font(.title2)
                 .fontWeight(.bold)
+        }
+    }
+}
+
+// Rename ScoreRow to avoid conflict with existing component
+struct PatternScoreRow: View {
+    let title: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
             
-            VStack(spacing: 15) {
-                ScoreRow(title: "Final Score", value: "\(score) points")
-                ScoreRow(title: "Performance", value: "\(percentageScore)%")
+            Spacer()
+            
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.medium)
+        }
+    }
+}
+
+struct ScoreSummaryView: View {
+    let score: Int
+    let maxScore: Int
+    let percentageScore: Int
+    let roundScores: [RoundScoreDetails]
+    
+    var body: some View {
+        VStack(spacing: 15) {
+            // Show raw score using our renamed component
+            PatternScoreRow(title: "Total Score", value: "\(score) points")
+            
+            // Show percentage
+            PatternScoreRow(title: "Performance", value: "\(percentageScore)%")
+            
+            // Round breakdown section
+            if !roundScores.isEmpty {
+                RoundBreakdownView(roundScores: roundScores)
             }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
-            .padding(.horizontal)
             
-            Text(feedbackMessage)
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
+            // Maximum score text
+            Text("Maximum possible: \(maxScore) points (100 points per round)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal)
+    }
+}
+
+// Now simplify the PatternSequenceResultsView to use these components
+struct PatternSequenceResultsView: View {
+    let score: Int
+    let maxScore: Int
+    let roundScores: [RoundScoreDetails]
+    let onDismiss: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var hasSubmitted = false
+    
+    var percentageScore: Int {
+        Int((Double(score) / Double(maxScore)) * 100)
+    }
+    
+    // Add this computed property to validate the score
+    private var calculatedTotal: Int {
+        roundScores.reduce(0) { $0 + $1.totalScore }
+    }
+    
+    var body: some View {
+        VStack(spacing: 25) {
+            // Header
+            ResultsHeaderView()
             
+            // Score summary
+            ScoreSummaryView(
+                score: calculatedTotal, // Use the recalculated score to be safe
+                maxScore: maxScore,
+                percentageScore: Int((Double(calculatedTotal) / Double(maxScore)) * 100),
+                roundScores: roundScores
+            )
+            
+            // Explanation text
             Text("Pattern sequence exercises strengthen working memory and attention to order, which is essential for following directions, learning procedures, and remembering PIN numbers or passwords.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
+            // Done button
             Button(action: {
                 if !hasSubmitted {
-                    // Record exercise completion only once
                     ExerciseProgressManager.shared.recordExerciseCompletion(
                         exerciseId: "patternSequence",
                         score: score,
@@ -458,9 +639,7 @@ struct PatternSequenceResultsView: View {
                     )
                     hasSubmitted = true
                 }
-                // Dismiss the sheet first
                 dismiss()
-                // Then dismiss the exercise view
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     onDismiss()
                 }

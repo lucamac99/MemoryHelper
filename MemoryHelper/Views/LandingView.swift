@@ -3,10 +3,12 @@ import SwiftUI
 struct LandingView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var notificationManager = NotificationManager.shared
-    @State private var selectedTab = 0
+    
+    // Use the shared tab manager 
+    @StateObject private var tabManager = TabSelectionManager.shared
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: $tabManager.selectedTab) {
             HomeView()
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
@@ -37,5 +39,6 @@ struct LandingView: View {
                 }
                 .tag(4)
         }
+        .environmentObject(tabManager)
     }
 } 
