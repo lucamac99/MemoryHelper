@@ -4,28 +4,36 @@ struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @State private var showingAddEntry = false
     @State private var selectedEntryType = "note"
+    @ObservedObject private var onboardingManager = OnboardingManager.shared
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
                     // Header
-                    HeaderView()
+                    HeaderView(
+                        showingAddEntry: $showingAddEntry,
+                        selectedEntryType: $selectedEntryType
+                    )
                     
                     // Quick Actions
                     QuickActionsView(
                         showingAddEntry: $showingAddEntry,
                         selectedEntryType: $selectedEntryType
                     )
+                    .disabled(!onboardingManager.hasCompletedOnboarding)
                     
-                    // Memory Exercises Preview - NEW SECTION
+                    // Memory Exercises Preview
                     MemoryExercisesPreviewView()
+                    .disabled(!onboardingManager.hasCompletedOnboarding)
                     
                     // Daily Stats
                     DailyStatsView()
+                    .disabled(!onboardingManager.hasCompletedOnboarding)
                     
                     // Recent Memories
                     RecentMemoriesView()
+                    .disabled(!onboardingManager.hasCompletedOnboarding)
                 }
                 .padding()
             }
@@ -33,31 +41,65 @@ struct HomeView: View {
             .sheet(isPresented: $showingAddEntry) {
                 AddEntryView(initialType: selectedEntryType)
             }
+            .overlay(
+                Group {
+                    if !onboardingManager.hasCompletedOnboarding && false {
+                        OnboardingView()
+                            .edgesIgnoringSafeArea(.all)
+                    }
+                }
+            )
+            .onAppear {
+                checkFirstLaunch()
+            }
         }
+    }
+    
+    private func checkFirstLaunch() {
+        // If this is running in preview, reset onboarding for testing
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+            // Uncomment to test onboarding in preview
+            // onboardingManager.resetOnboarding()
+        }
+        #endif
     }
 }
 
 struct HeaderView: View {
     @StateObject private var authManager = AuthenticationManager.shared
+    @Binding var showingAddEntry: Bool
+    @Binding var selectedEntryType: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Welcome back,")
-                    .font(.title2)
-                Text(authManager.user?.email?.components(separatedBy: "@").first ?? "User")
-                    .font(.title2.bold())
-                Spacer()
+        Button {
+            selectedEntryType = "rating"
+            showingAddEntry = true
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Welcome back,")
+                        .font(.headline)
+                    Text(authManager.user?.email?.components(separatedBy: "@").first ?? "User")
+                        .font(.headline.bold())
+                    Spacer()
+                    
+                    Image(systemName: "star.fill")
+                        .foregroundColor(.yellow)
+                        .font(.subheadline)
+                }
+                
+                Text("How's your day going? Tap to rate")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            
-            Text("How's your day going?")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(RoundedRectangle(cornerRadius: 15)
+                .fill(Color(.systemBackground))
+                .shadow(color: .gray.opacity(0.2), radius: 4))
         }
-        .padding()
-        .background(RoundedRectangle(cornerRadius: 15)
-            .fill(Color(.systemBackground))
-            .shadow(color: .gray.opacity(0.2), radius: 5))
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -255,8 +297,8 @@ struct MemoryExercisesPreviewView: View {
             PatternSequenceExerciseView()
         case "attentionFocus":
             AttentionFocusExerciseView()
-        case "memoryPalace":
-            MemoryPalaceExerciseView()
+        case "numberMnemonics":
+            NumberMnemonicsExerciseView()
         default:
             ComingSoonExerciseView(exercise: exercise)
         }

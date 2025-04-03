@@ -4,7 +4,7 @@ import CoreData
 struct MemoryListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @State private var searchText = ""
-    @State private var selectedFilter: MemoryType = .all
+    @State private var selectedFilter: MemoryType
     @State private var showingAddEntry = false
     
     enum MemoryType: String, CaseIterable {
@@ -21,6 +21,19 @@ struct MemoryListView: View {
             case .event: return "calendar"
             }
         }
+        
+        static func fromString(_ string: String) -> MemoryType {
+            switch string {
+            case "note": return .note
+            case "rating": return .rating
+            case "event": return .event
+            default: return .all
+            }
+        }
+    }
+    
+    init(initialFilter: String = "all") {
+        _selectedFilter = State(initialValue: MemoryType.fromString(initialFilter))
     }
     
     var body: some View {
@@ -82,7 +95,21 @@ struct MemoryListContent: View {
         var predicates: [NSPredicate] = []
         
         if filter != .all {
-            predicates.append(NSPredicate(format: "type == %@", filter.rawValue.lowercased()))
+            // Match the type field in Core Data with the type we want to filter
+            let typeString: String
+            switch filter {
+            case .note:
+                typeString = "note"
+            case .rating:
+                typeString = "rating"
+            case .event:
+                typeString = "event"
+            default:
+                typeString = ""
+            }
+            if !typeString.isEmpty {
+                predicates.append(NSPredicate(format: "type == %@", typeString))
+            }
         }
         
         if !searchText.isEmpty {

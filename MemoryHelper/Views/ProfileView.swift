@@ -54,7 +54,8 @@ struct ProfileView: View {
                         SettingsRowView(
                             title: "Sign Out",
                             icon: "arrow.right.circle.fill",
-                            color: .red
+                            color: .red,
+                            showChevron: true
                         )
                     }
                 }
@@ -125,6 +126,7 @@ struct SettingsRowView: View {
     let title: String
     let icon: String
     let color: Color
+    var showChevron: Bool = false
     
     var body: some View {
         HStack(spacing: 12) {
@@ -138,9 +140,11 @@ struct SettingsRowView: View {
             
             Spacer()
             
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.gray)
+            if showChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.gray)
+            }
         }
         .contentShape(Rectangle())
     }

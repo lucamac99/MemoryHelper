@@ -47,7 +47,7 @@ class NotificationManager: ObservableObject {
     func scheduleDailyNotification() {
         let content = UNMutableNotificationContent()
         content.title = "How was your day?"
-        content.body = "Take a moment to record your memories and rate your day."
+        content.body = "Take a moment to record your memories and exercise your brain."
         content.sound = .default
         
         // Create a time-based trigger for 8 PM daily
@@ -90,7 +90,7 @@ class NotificationManager: ObservableObject {
     private func scheduleDailyNotification(at components: DateComponents = Calendar.current.dateComponents([.hour, .minute], from: Date())) {
         let content = UNMutableNotificationContent()
         content.title = "How was your day?"
-        content.body = "Take a moment to record your memories and rate your day."
+        content.body = "Take a moment to record your memories and exercise your brain."
         content.sound = .default
         
         var dateComponents = DateComponents()

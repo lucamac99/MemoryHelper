@@ -118,8 +118,8 @@ struct MemoryExercisesView: View {
             PatternSequenceExerciseView()
         case "attentionFocus":
             AttentionFocusExerciseView()
-        case "memoryPalace":
-            MemoryPalaceExerciseView()
+        case "numberMnemonics":
+            NumberMnemonicsExerciseView()
         default:
             // Placeholder for exercises not yet implemented
             ComingSoonExerciseView(exercise: exercise)
@@ -251,7 +251,7 @@ struct MemoryExercise: Identifiable {
             icon: "brain.head.profile",
             category: .working,
             difficulty: 4,
-            timeInMinutes: 5,
+            timeInMinutes: 2,
             color: .blue
         ),
         MemoryExercise(
@@ -261,7 +261,7 @@ struct MemoryExercise: Identifiable {
             icon: "square.grid.3x3.fill",
             category: .spatial,
             difficulty: 3,
-            timeInMinutes: 3,
+            timeInMinutes: 2,
             color: .purple
         ),
         MemoryExercise(
@@ -281,7 +281,7 @@ struct MemoryExercise: Identifiable {
             icon: "arrow.left.arrow.right",
             category: .working,
             difficulty: 3,
-            timeInMinutes: 4,
+            timeInMinutes: 3,
             color: .orange
         ),
         MemoryExercise(
@@ -295,14 +295,14 @@ struct MemoryExercise: Identifiable {
             color: .red
         ),
         MemoryExercise(
-            id: "memoryPalace",
-            name: "Memory Palace",
-            description: "Learn the ancient 'Method of Loci' used by memory champions to remember large amounts of information.",
-            icon: "building.columns",
-            category: .spatial,
-            difficulty: 4,
-            timeInMinutes: 6,
-            color: .indigo
+            id: "numberMnemonics",
+            name: "Number Mnemonics",
+            description: "Learn to associate numbers with shapes and images to memorize long number sequences.",
+            icon: "123.rectangle",
+            category: .verbal,
+            difficulty: 3,
+            timeInMinutes: 4,
+            color: .blue
         )
     ]
 }

@@ -86,11 +86,11 @@ struct MemoryPalaceExerciseView: View {
                     Text("About this ancient technique:")
                         .font(.headline)
                     
-                    PointView(text: "The Memory Palace (or Method of Loci) has been used since ancient Greek and Roman times")
+                    MemoryPalacePointView(text: "The Memory Palace (or Method of Loci) has been used since ancient Greek and Roman times")
                     
-                    PointView(text: "It uses spatial memory and visualization to remember information")
+                    MemoryPalacePointView(text: "It uses spatial memory and visualization to remember information")
                     
-                    PointView(text: "Memory champions use this method to memorize decks of cards, long numbers, and lists")
+                    MemoryPalacePointView(text: "Memory champions use this method to memorize decks of cards, long numbers, and lists")
                 }
                 .padding()
                 .background(Color(.systemGray6).opacity(0.7))
@@ -401,7 +401,7 @@ struct MemoryPalaceExerciseView: View {
 
 // Supporting Views
 
-struct PointView: View {
+struct MemoryPalacePointView: View {
     let text: String
     
     var body: some View {
@@ -589,14 +589,18 @@ class MemoryPalaceViewModel: ObservableObject {
         
         // Create items to memorize
         items = [
-            MemoryItem(id: "elephant", name: "Elephant", icon: "elephant"),
+            MemoryItem(id: "elephant", name: "Elephant", icon: "rhinoceros"),
             MemoryItem(id: "crown", name: "Crown", icon: "crown"),
             MemoryItem(id: "key", name: "Key", icon: "key"),
-            MemoryItem(id: "apple", name: "Apple", icon: "apple.logo"),
+            MemoryItem(id: "apple", name: "Apple", icon: "applelogo"),
             MemoryItem(id: "sun", name: "Sun", icon: "sun.max"),
             MemoryItem(id: "umbrella", name: "Umbrella", icon: "umbrella"),
             MemoryItem(id: "car", name: "Car", icon: "car"),
-            MemoryItem(id: "book", name: "Book", icon: "book")
+            MemoryItem(id: "book", name: "Book", icon: "book"),
+            MemoryItem(id: "bell", name: "Bell", icon: "bell"),
+            MemoryItem(id: "guitar", name: "Guitar", icon: "pianokeys"),
+            MemoryItem(id: "camera", name: "Camera", icon: "camera"),
+            MemoryItem(id: "globe", name: "Globe", icon: "globe")
         ].shuffled().prefix(8).map { $0 } // Take 8 random items
         
         gameState = .intro

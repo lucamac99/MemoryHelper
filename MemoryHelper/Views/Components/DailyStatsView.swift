@@ -4,6 +4,8 @@ import CoreData
 struct DailyStatsView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest private var todayEntries: FetchedResults<MemoryEntry>
+    @State private var showingAddEntry = false
+    @State private var selectedEntryType = "rating"
     
     init() {
         let calendar = Calendar.current
@@ -32,32 +34,50 @@ struct DailyStatsView: View {
                 .font(.headline)
             
             HStack(spacing: 20) {
-                StatisticBox(
-                    title: "Memories",
-                    value: "\(todayEntries.count)",
-                    icon: "doc.text.fill",
-                    color: .blue
-                )
+                // All Memories Link
+                NavigationLink(destination: MemoryListView()) {
+                    StatisticBox(
+                        title: "Memories",
+                        value: "\(todayEntries.count)",
+                        icon: "doc.text.fill",
+                        color: .blue
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
                 
-                StatisticBox(
-                    title: "Average Mood",
-                    value: averageMoodText,
-                    icon: "heart.fill",
-                    color: .pink
-                )
+                // Rate Mood Link
+                Button {
+                    selectedEntryType = "rating"
+                    showingAddEntry = true
+                } label: {
+                    StatisticBox(
+                        title: "Average Mood",
+                        value: averageMoodText,
+                        icon: "heart.fill",
+                        color: .pink
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
                 
-                StatisticBox(
-                    title: "Events",
-                    value: "\(todayEvents.count)",
-                    icon: "calendar",
-                    color: .green
-                )
+                // Events Link
+                NavigationLink(destination: FilteredMemoryListView(filter: "event")) {
+                    StatisticBox(
+                        title: "Events",
+                        value: "\(todayEvents.count)",
+                        icon: "calendar",
+                        color: .green
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(15)
         .shadow(color: .gray.opacity(0.2), radius: 5)
+        .sheet(isPresented: $showingAddEntry) {
+            AddEntryView(initialType: selectedEntryType)
+        }
     }
     
     private var averageMoodText: String {
@@ -97,5 +117,14 @@ struct StatisticBox: View {
         .padding(.vertical, 12)
         .background(color.opacity(0.1))
         .cornerRadius(10)
+    }
+}
+
+// Create a new FilteredMemoryListView to be used for filtered navigation
+struct FilteredMemoryListView: View {
+    let filter: String
+    
+    var body: some View {
+        MemoryListView(initialFilter: filter)
     }
 } 

@@ -53,9 +53,7 @@ struct SignInView: View {
                     
                     // Sign In Button
                     Button {
-                        Task {
-                            await signIn()
-                        }
+                        signIn()
                     } label: {
                         Text("Sign In")
                             .font(.headline)
@@ -145,12 +143,16 @@ struct SignInView: View {
         }
     }
     
-    private func signIn() async {
-        do {
-            try await authManager.signIn(email: email, password: password)
-        } catch {
-            alertMessage = error.localizedDescription
-            showingAlert = true
+    private func signIn() {
+        authManager.signIn(email: email, password: password) { success, errorMessage in
+            if success {
+                // Sign in successful, no need to do anything here
+                // The AuthenticationManager already updates isAuthenticated
+            } else if let errorMessage = errorMessage {
+                // Show alert with error message
+                alertMessage = errorMessage
+                showingAlert = true
+            }
         }
     }
 }

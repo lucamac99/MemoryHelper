@@ -29,6 +29,7 @@ class AuthenticationManager: ObservableObject {
     
     @Published var user: User?
     @Published var isAuthenticated = false
+    @Published var initialView: String = "home" // Default view after authentication
     
     init() {
         user = Auth.auth().currentUser
@@ -40,16 +41,35 @@ class AuthenticationManager: ObservableObject {
         }
     }
     
-    func signIn(email: String, password: String) async throws {
-        do {
-            let result = try await Auth.auth().signIn(withEmail: email, password: password)
-            await MainActor.run {
-                self.user = result.user
-                self.isAuthenticated = true
+    func signIn(email: String, password: String, completion: @escaping (Bool, String?) -> Void) {
+        Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
+            if let error = error as NSError? {
+                let errorMessage = self?.handleFirebaseError(error) ?? error.localizedDescription
+                completion(false, errorMessage)
+                return
             }
-        } catch let error as NSError {
-            let errorMessage = self.handleFirebaseError(error)
-            throw AuthError.signInError(errorMessage)
+            
+            guard let self = self, let user = authResult?.user else {
+                completion(false, "Failed to retrieve user information")
+                return
+            }
+            
+            self.user = user
+            self.isAuthenticated = true
+            
+            // Check if this is a new user (by creation date)
+            let creationDate = user.metadata.creationDate
+            let lastSignInDate = user.metadata.lastSignInDate
+            let isNewUser = creationDate?.timeIntervalSince1970 == lastSignInDate?.timeIntervalSince1970
+            
+            // If this is a new user account, reset onboarding
+            //if isNewUser {
+            OnboardingManager.shared.resetOnboarding()
+            //}
+            
+            self.initialView = "home" // Ensure home is the destination after sign-in
+            
+            completion(true, nil)
         }
     }
     
@@ -134,6 +154,18 @@ class AuthenticationManager: ObservableObject {
             }
         } else {
             return error.localizedDescription
+        }
+    }
+    
+    func signIn(email: String, password: String) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            signIn(email: email, password: password) { success, errorMessage in
+                if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(throwing: AuthError.signInError(errorMessage ?? "Unknown error"))
+                }
+            }
         }
     }
 } 

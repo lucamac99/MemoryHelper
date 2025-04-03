@@ -3,46 +3,47 @@ import SwiftUI
 struct TermsOfServiceView: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
                 Group {
                     Text("Terms of Service")
-                        .font(.title.bold())
+                        .font(.title3.bold())
                     
                     Text("Last updated: \(Date().formatted(date: .long, time: .omitted))")
+                        .font(.caption)
                         .foregroundColor(.secondary)
                     
                     TermsSection(title: "Acceptance of Terms", content: """
-                        By accessing and using Memory Helper, you accept and agree to be bound by the terms and conditions of this agreement.
+                        By accessing and using Memory Helper, you accept and agree to be bound by these terms and conditions.
                         """)
                     
                     TermsSection(title: "User Account", content: """
-                        • You are responsible for maintaining the confidentiality of your account
-                        • You agree to accept responsibility for all activities that occur under your account
-                        • You must provide accurate and complete information
+                        • You are responsible for maintaining your account security
+                        • You agree to accept responsibility for activities under your account
+                        • You must provide accurate information when creating an account
                         """)
                     
-                    TermsSection(title: "User Content", content: """
-                        • You retain ownership of your content
-                        • You grant us license to use your content to provide the service
-                        • You are responsible for your content
+                    TermsSection(title: "Your Content", content: """
+                        • You retain ownership of your memory entries
+                        • You grant us license to store and process your data to provide the service
+                        • You are responsible for the content you save in the app
                         """)
                 }
                 
                 Group {
                     TermsSection(title: "Prohibited Activities", content: """
                         You agree not to:
-                        • Violate any laws
-                        • Impersonate others
+                        • Use the app for illegal purposes
+                        • Attempt to access other users' data
                         • Share harmful content
-                        • Attempt to breach security
+                        • Attempt to breach app security
                         """)
                     
                     TermsSection(title: "Termination", content: """
-                        We reserve the right to terminate or suspend your account at any time for any reason without notice.
+                        We reserve the right to suspend accounts that violate these terms.
                         """)
                     
                     TermsSection(title: "Changes to Terms", content: """
-                        We reserve the right to modify these terms at any time. We will notify you of any changes by posting the new terms on the app.
+                        We may update these terms periodically. Significant changes will be notified through the app.
                         """)
                 }
             }
@@ -58,12 +59,12 @@ struct TermsSection: View {
     let content: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.headline)
+                .font(.subheadline.bold())
             
             Text(content)
-                .font(.body)
+                .font(.footnote)
         }
     }
 } 

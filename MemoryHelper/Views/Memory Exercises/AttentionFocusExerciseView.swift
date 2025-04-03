@@ -42,7 +42,7 @@ struct AttentionFocusExerciseView: View {
             Spacer()
             
             // Action button
-            Button(actionButtonTitle) {
+            Button {
                 if viewModel.gameState == .finished {
                     // When in finished state, dismiss the view
                     dismiss()
@@ -50,13 +50,15 @@ struct AttentionFocusExerciseView: View {
                     // Handle other button actions through the view model
                     viewModel.handleActionButton()
                 }
+            } label: {
+                Text(actionButtonTitle)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(buttonBackgroundColor)
+                    .cornerRadius(12)
             }
-            .font(.headline)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(buttonBackgroundColor)
-            .cornerRadius(12)
             .padding(.horizontal)
             .padding(.bottom, 20)
             .disabled(isButtonDisabled)
