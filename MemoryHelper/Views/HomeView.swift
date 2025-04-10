@@ -4,7 +4,6 @@ struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @State private var showingAddEntry = false
     @State private var selectedEntryType = "note"
-    @ObservedObject private var onboardingManager = OnboardingManager.shared
     
     var body: some View {
         NavigationView {
@@ -21,19 +20,15 @@ struct HomeView: View {
                         showingAddEntry: $showingAddEntry,
                         selectedEntryType: $selectedEntryType
                     )
-                    .disabled(!onboardingManager.hasCompletedOnboarding)
                     
                     // Memory Exercises Preview
                     MemoryExercisesPreviewView()
-                    .disabled(!onboardingManager.hasCompletedOnboarding)
                     
                     // Daily Stats
                     DailyStatsView()
-                    .disabled(!onboardingManager.hasCompletedOnboarding)
                     
                     // Recent Memories
                     RecentMemoriesView()
-                    .disabled(!onboardingManager.hasCompletedOnboarding)
                 }
                 .padding()
             }
@@ -41,28 +36,7 @@ struct HomeView: View {
             .sheet(isPresented: $showingAddEntry) {
                 AddEntryView(initialType: selectedEntryType)
             }
-            .overlay(
-                Group {
-                    if !onboardingManager.hasCompletedOnboarding && false {
-                        OnboardingView()
-                            .edgesIgnoringSafeArea(.all)
-                    }
-                }
-            )
-            .onAppear {
-                checkFirstLaunch()
-            }
         }
-    }
-    
-    private func checkFirstLaunch() {
-        // If this is running in preview, reset onboarding for testing
-        #if DEBUG
-        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
-            // Uncomment to test onboarding in preview
-            // onboardingManager.resetOnboarding()
-        }
-        #endif
     }
 }
 

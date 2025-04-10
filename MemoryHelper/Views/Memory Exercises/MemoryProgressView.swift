@@ -73,6 +73,7 @@ struct MemoryProgressView: View {
                     Text("Exercise Details")
                         .font(.headline)
                         .padding(.horizontal)
+                        .padding(.top, selectedChartType == .byCategory ? 20 : 0)
                     
                     ForEach(MemoryExercise.allExercises) { exercise in
                         let stats = progressManager.exerciseStats[exercise.id] ?? ExerciseStat()

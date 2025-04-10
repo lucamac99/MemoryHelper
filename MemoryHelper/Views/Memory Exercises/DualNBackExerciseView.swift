@@ -496,10 +496,37 @@ struct DualNBackExerciseView: View {
         canRespondInThisRound = false
     }
     
+    private func calculateMaxPossibleScore() -> Int {
+        // Calculate position matches
+        let positionMatchCount = positionMatches.suffix(totalRounds - currentLevel).filter { $0 }.count
+        
+        // Calculate letter matches
+        let letterMatchCount = letterMatches.suffix(totalRounds - currentLevel).filter { $0 }.count
+        
+        // Count rounds after the n-back level (when matches become possible)
+        let activeRounds = totalRounds - currentLevel
+        
+        // Calculate maximum possible points:
+        // - 10 points for each correct match identification
+        // - 5 points for each correct non-match (not clicking when there's no match)
+        let maxPositionPoints = (positionMatchCount * 10) + ((activeRounds - positionMatchCount) * 5)
+        let maxLetterPoints = (letterMatchCount * 10) + ((activeRounds - letterMatchCount) * 5)
+        
+        return maxPositionPoints + maxLetterPoints
+    }
+    
     private func endGame() {
         gameState = .finished
         timer?.invalidate()
         stopAllAudio()
+        
+        // Record exercise completion when the game ends
+        ExerciseProgressManager.shared.recordExerciseCompletion(
+            exerciseId: "dualNBack",
+            score: score,
+            maxScore: calculateMaxPossibleScore()
+        )
+        
         showingResults = true
     }
     
@@ -708,16 +735,7 @@ struct ResultsView: View {
                     .padding(.horizontal)
                 
                 Button(action: {
-                    if !hasSubmitted {
-                        // Record exercise completion only once
-                        ExerciseProgressManager.shared.recordExerciseCompletion(
-                            exerciseId: "dualNBack",
-                            score: score,
-                            maxScore: maxPossibleScore
-                        )
-                        hasSubmitted = true
-                    }
-                    // Dismiss the sheet first
+                    // Remove the exercise recording since we now do it in endGame
                     dismiss()
                     // Then dismiss the exercise view
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -733,7 +751,6 @@ struct ResultsView: View {
                         .cornerRadius(12)
                         .padding(.horizontal)
                 }
-                .disabled(hasSubmitted)
                 .padding(.bottom, 40)
             }
         }

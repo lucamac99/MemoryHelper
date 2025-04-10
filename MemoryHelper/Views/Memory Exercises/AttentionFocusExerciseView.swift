@@ -498,24 +498,23 @@ class AttentionFocusViewModel: ObservableObject {
         let currentHighScore = UserDefaults.standard.integer(forKey: "attentionFocusHighScore")
         if score > currentHighScore {
             isHighScore = true
+            // Save high score immediately
+            UserDefaults.standard.set(score, forKey: "attentionFocusHighScore")
         }
+        
+        // Save exercise progress immediately
+        ExerciseProgressManager.shared.recordExerciseCompletion(
+            exerciseId: "attentionFocus",
+            score: Int(accuracy * 100),
+            maxScore: 100 // Maximum achievable score is 100%
+        )
         
         gameState = .finished
     }
     
     func saveProgress() {
-        // Save high score if needed
-        if isHighScore {
-            UserDefaults.standard.set(score, forKey: "attentionFocusHighScore")
-        }
-        
-        // Update exercise stats
-        let statsManager = ExerciseProgressManager.shared
-        statsManager.recordExerciseCompletion(
-            exerciseId: "attentionFocus",
-            score: Int(accuracy * 100),
-            maxScore: 100 // Maximum achievable score is 100%
-        )
+        // This function can be removed, or if you want to keep it for other purposes:
+        // Leave it empty or add other cleanup tasks
     }
 }
 

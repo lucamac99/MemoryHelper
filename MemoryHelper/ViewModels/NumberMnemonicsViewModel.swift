@@ -214,7 +214,7 @@ class NumberMnemonicsViewModel: ObservableObject {
     
     func startMemorizationTimer() {
         // Adaptive difficulty: shorter time for advanced rounds
-        let baseTime = max(7, 12 - currentSequenceIndex) // 12 seconds for first sequence, down to 7
+        let baseTime = max(7, 8 - currentSequenceIndex) // 12 seconds for first sequence, down to 7
         memorizeTimer = baseTime
         
         // Set showMemoryTip based on current sequence index

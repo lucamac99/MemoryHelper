@@ -1,5 +1,7 @@
 import SwiftUI
 import LocalAuthentication
+import CoreData
+import FirebaseAuth
 
 class PrivacySettings: ObservableObject {
     @Published var useBiometrics: Bool {
@@ -36,6 +38,8 @@ class PrivacySettings: ObservableObject {
 struct PrivacySettingsView: View {
     @StateObject private var settings = PrivacySettings()
     @State private var showingDataDeletionConfirmation = false
+    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var authManager: AuthenticationManager
     
     let autoLockOptions = [
         (0, "Never"),
@@ -60,14 +64,10 @@ struct PrivacySettingsView: View {
             }
             
             Section(header: Text("Data & Privacy")) {
-                NavigationLink(destination: MemoryExportView()) {
-                    Label("Export Data", systemImage: "square.and.arrow.up")
-                }
-                
                 Button(role: .destructive) {
                     showingDataDeletionConfirmation = true
                 } label: {
-                    Label("Delete All Data", systemImage: "trash")
+                    Label("Delete Account & Data", systemImage: "trash")
                 }
             }
             
@@ -83,50 +83,76 @@ struct PrivacySettingsView: View {
         }
         .navigationTitle("Privacy & Security")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Delete All Data", isPresented: $showingDataDeletionConfirmation) {
+        .alert("Delete Account & Data", isPresented: $showingDataDeletionConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
-                deleteAllData()
+                Task {
+                    await deleteAccountAndData()
+                }
             }
         } message: {
-            Text("Are you sure you want to delete all your data? This action cannot be undone.")
+            Text("This will permanently delete your account and all associated data. This action cannot be undone.")
         }
     }
     
-    private func deleteAllData() {
-        // Implement data deletion logic
-    }
-}
-
-struct MemoryExportView: View {
-    var body: some View {
-        List {
-            Section {
-                ExportOptionRow(title: "Export as PDF", icon: "doc.fill")
-                ExportOptionRow(title: "Export as CSV", icon: "table")
-                ExportOptionRow(title: "Export as JSON", icon: "curlybraces")
-            } header: {
-                Text("Choose Format")
-            } footer: {
-                Text("Your data will be exported in the selected format.")
-            }
+    private func deleteAccountAndData() async {
+        guard let userId = AuthenticationManager.shared.user?.uid else {
+            return
         }
-        .navigationTitle("Export Data")
+        
+        // 1. Delete CoreData entries
+        await deleteCoreData(for: userId)
+        
+        // 2. Delete UserDefaults data
+        clearUserDefaults()
+        
+        // 3. Delete Firebase account and sign out
+        do {
+            try await Auth.auth().currentUser?.delete()
+            try Auth.auth().signOut()
+            try await authManager.signOut()
+            
+            // 4. Dismiss the current view and return to authentication
+            DispatchQueue.main.async {
+                presentationMode.wrappedValue.dismiss()
+            }
+        } catch {
+            print("Error during account deletion: \(error)")
+            // You might want to show an alert to the user here
+        }
     }
-}
-
-struct ExportOptionRow: View {
-    let title: String
-    let icon: String
     
-    var body: some View {
-        Button(action: {}) {
-            Label {
-                Text(title)
-            } icon: {
-                Image(systemName: icon)
-                    .foregroundColor(.blue)
-            }
+    private func deleteCoreData(for userId: String) async {
+        let context = PersistenceController.shared.container.viewContext
+        
+        // Create batch delete request for all user's data
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = MemoryEntry.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "userId == %@", userId)
+        
+        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        batchDeleteRequest.resultType = .resultTypeObjectIDs
+        
+        do {
+            // Execute batch delete
+            let result = try context.execute(batchDeleteRequest) as? NSBatchDeleteResult
+            let changes: [AnyHashable: Any] = [
+                NSDeletedObjectsKey: result?.result as? [NSManagedObjectID] ?? []
+            ]
+            
+            // Merge changes to view context
+            NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
+            try context.save()
+        } catch {
+            print("Error batch deleting data: \(error)")
         }
+    }
+    
+    private func clearUserDefaults() {
+        // Clear only user-specific data
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: "useBiometrics")
+        defaults.removeObject(forKey: "autoLockTimeout")
+        // Add any other user-specific UserDefaults keys here
+        defaults.synchronize()
     }
 } 

@@ -50,11 +50,6 @@ struct DataExportView: View {
     private func exportData(format: ExportFormat) {
         let fetchRequest: NSFetchRequest<MemoryEntry> = MemoryEntry.fetchRequest()
         
-        // Only export current user's data
-        if let userId = AuthenticationManager.shared.user?.uid {
-            fetchRequest.predicate = NSPredicate(format: "userId == %@", userId)
-        }
-        
         do {
             let entries = try viewContext.fetch(fetchRequest)
             if let url = exportManager.exportData(entries: entries, format: format) {

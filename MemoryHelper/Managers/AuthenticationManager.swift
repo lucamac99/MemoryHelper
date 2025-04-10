@@ -64,7 +64,7 @@ class AuthenticationManager: ObservableObject {
             
             // If this is a new user account, reset onboarding
             //if isNewUser {
-            OnboardingManager.shared.resetOnboarding()
+            //OnboardingManager.shared.resetOnboarding()
             //}
             
             self.initialView = "home" // Ensure home is the destination after sign-in

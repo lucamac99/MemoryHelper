@@ -13,14 +13,36 @@ struct ExerciseStatsView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     ForEach(MemoryExercise.allExercises) { exercise in
-                        ExerciseStatCard(
-                            exercise: exercise,
-                            stats: progressManager.exerciseStats[exercise.id] ?? ExerciseStat()
-                        )
+                        NavigationLink(destination: exerciseDestination(for: exercise)) {
+                            ExerciseStatCard(
+                                exercise: exercise,
+                                stats: progressManager.exerciseStats[exercise.id] ?? ExerciseStat()
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle()) // This prevents the default button styling
                     }
                 }
                 .padding(.horizontal)
             }
+        }
+    }
+    
+    @ViewBuilder
+    private func exerciseDestination(for exercise: MemoryExercise) -> some View {
+        switch exercise.id {
+        case "dualNBack":
+            DualNBackExerciseView()
+                .navigationTitle("Dual N-Back")
+                .navigationBarTitleDisplayMode(.inline)
+        case "attentionFocus":
+            AttentionFocusExerciseView()
+                .navigationTitle("Attention Focus")
+                .navigationBarTitleDisplayMode(.inline)
+        default:
+            Text("Exercise not available")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
@@ -50,6 +72,10 @@ struct ExerciseStatCard: View {
                     .font(.headline)
                 
                 Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.secondary)
             }
             
             // Stats
@@ -76,7 +102,7 @@ struct ExerciseStatCard: View {
                 )
             }
             
-            // Progress bar - now uses exercise color instead of generic blue
+            // Progress bar
             if stats.completedCount > 0 {
                 ProgressBar(value: stats.highScore / 100, color: exercise.color)
                     .frame(height: 8)
