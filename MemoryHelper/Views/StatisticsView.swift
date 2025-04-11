@@ -28,54 +28,52 @@ struct StatisticsView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    Picker("Time Range", selection: $timeRange) {
-                        ForEach(TimeRange.allCases, id: \.self) { range in
-                            Text(range.rawValue).tag(range)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    
-                    // Updated Mood Chart
-                    ChartCard(title: "Mood Trends") {
-                        MoodChart(entries: moodEntries, timeRange: timeRange)
-                    }
-                    
-                    // Activity Summary
-                    HStack {
-                        StatCard(
-                            title: "Total Entries",
-                            value: "\(entries.count)",
-                            icon: "doc.text.fill",
-                            color: .blue
-                        )
-                        
-                        StatCard(
-                            title: "Average Mood",
-                            value: String(format: "%.1f", averageMood),
-                            icon: "heart.fill",
-                            color: .pink
-                        )
-                    }
-                    .padding(.horizontal)
-                    
-                    // Entry Types Distribution
-                    ChartCard(title: "Entry Types") {
-                        EntryTypeChart(entries: entries)
+        ScrollView {
+            VStack(spacing: 20) {
+                Picker("Time Range", selection: $timeRange) {
+                    ForEach(TimeRange.allCases, id: \.self) { range in
+                        Text(range.rawValue).tag(range)
                     }
                 }
-                .padding(.vertical)
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                
+                // Updated Mood Chart
+                ChartCard(title: "Mood Trends") {
+                    MoodChart(entries: moodEntries, timeRange: timeRange)
+                }
+                
+                // Activity Summary
+                HStack {
+                    StatCard(
+                        title: "Total Entries",
+                        value: "\(entries.count)",
+                        icon: "doc.text.fill",
+                        color: .blue
+                    )
+                    
+                    StatCard(
+                        title: "Average Mood",
+                        value: String(format: "%.1f", averageMood),
+                        icon: "heart.fill",
+                        color: .pink
+                    )
+                }
+                .padding(.horizontal)
+                
+                // Entry Types Distribution
+                ChartCard(title: "Entry Types") {
+                    EntryTypeChart(entries: entries)
+                }
             }
-            .navigationTitle("Statistics")
-            .onAppear {
-                loadEntries()
-            }
-            .onChange(of: timeRange) { _ in
-                loadEntries()
-            }
+            .padding(.vertical)
+        }
+        .navigationTitle("Statistics")
+        .onAppear {
+            loadEntries()
+        }
+        .onChange(of: timeRange) { _ in
+            loadEntries()
         }
     }
     

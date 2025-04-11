@@ -37,40 +37,38 @@ struct MemoryListView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Filter Pills
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(MemoryType.allCases, id: \.self) { type in
-                            FilterPill(type: type, isSelected: selectedFilter == type) {
-                                selectedFilter = type
-                            }
+        VStack(spacing: 0) {
+            // Filter Pills
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(MemoryType.allCases, id: \.self) { type in
+                        FilterPill(type: type, isSelected: selectedFilter == type) {
+                            selectedFilter = type
                         }
                     }
-                    .padding(.horizontal)
                 }
-                .padding(.vertical, 8)
-                .background(Color(.systemBackground))
-                
-                // Memory List
-                MemoryListContent(filter: selectedFilter, searchText: searchText)
+                .padding(.horizontal)
             }
-            .navigationTitle("Memories")
-            .searchable(text: $searchText, prompt: "Search memories...")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingAddEntry = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
-                    }
+            .padding(.vertical, 8)
+            .background(Color(.systemBackground))
+            
+            // Memory List
+            MemoryListContent(filter: selectedFilter, searchText: searchText)
+        }
+        .navigationTitle("Memories")
+        .searchable(text: $searchText, prompt: "Search memories...")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showingAddEntry = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title3)
                 }
             }
-            .sheet(isPresented: $showingAddEntry) {
-                AddEntryView()
-            }
+        }
+        .sheet(isPresented: $showingAddEntry) {
+            AddEntryView()
         }
     }
 }

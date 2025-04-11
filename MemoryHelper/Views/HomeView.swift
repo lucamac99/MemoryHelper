@@ -6,36 +6,34 @@ struct HomeView: View {
     @State private var selectedEntryType = "note"
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Header
-                    HeaderView(
-                        showingAddEntry: $showingAddEntry,
-                        selectedEntryType: $selectedEntryType
-                    )
-                    
-                    // Quick Actions
-                    QuickActionsView(
-                        showingAddEntry: $showingAddEntry,
-                        selectedEntryType: $selectedEntryType
-                    )
-                    
-                    // Memory Exercises Preview
-                    MemoryExercisesPreviewView()
-                    
-                    // Daily Stats
-                    DailyStatsView()
-                    
-                    // Recent Memories
-                    RecentMemoriesView()
-                }
-                .padding()
+        ScrollView {
+            VStack(spacing: 20) {
+                // Header
+                HeaderView(
+                    showingAddEntry: $showingAddEntry,
+                    selectedEntryType: $selectedEntryType
+                )
+                
+                // Quick Actions
+                QuickActionsView(
+                    showingAddEntry: $showingAddEntry,
+                    selectedEntryType: $selectedEntryType
+                )
+                
+                // Memory Exercises Preview
+                MemoryExercisesPreviewView()
+                
+                // Daily Stats
+                DailyStatsView()
+                
+                // Recent Memories
+                RecentMemoriesView()
             }
-            .navigationTitle("Memory Helper")
-            .sheet(isPresented: $showingAddEntry) {
-                AddEntryView(initialType: selectedEntryType)
-            }
+            .padding()
+        }
+        .navigationTitle("Memory Helper")
+        .sheet(isPresented: $showingAddEntry) {
+            AddEntryView(initialType: selectedEntryType)
         }
     }
 }

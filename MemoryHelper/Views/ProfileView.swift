@@ -9,68 +9,80 @@ struct ProfileView: View {
     @State private var showingLogoutAlert = false
     @State private var showingEditProfile = false
     @State private var isAnimating = false
+    @State private var showingErrorAlert = false
+    @State private var errorMessage = ""
     
     var body: some View {
-        NavigationView {
-            List {
-                // Profile Header
-                ProfileHeaderView()
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                    .padding(.bottom)
+        List {
+            // Profile Header
+            ProfileHeaderView()
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .padding(.bottom)
+            
+            // Settings Sections
+            Section {
+                NavigationLink(destination: NotificationSettingsView()) {
+                    SettingsRowView(
+                        title: "Notifications",
+                        icon: "bell.fill",
+                        color: .blue
+                    )
+                }
                 
-                // Settings Sections
-                Section {
-                    NavigationLink(destination: NotificationSettingsView()) {
-                        SettingsRowView(
-                            title: "Notifications",
-                            icon: "bell.fill",
-                            color: .blue
-                        )
-                    }
-                    
-                    NavigationLink(destination: PrivacySettingsView()) {
-                        SettingsRowView(
-                            title: "Privacy",
-                            icon: "lock.fill",
-                            color: .green
-                        )
-                    }
-                    
-                    NavigationLink(destination: AppearanceSettingsView()) {
-                        SettingsRowView(
-                            title: "Appearance",
-                            icon: "paintbrush.fill",
-                            color: .purple
-                        )
-                    }
-                } header: {
-                    Text("Settings")
+                NavigationLink(destination: PrivacySettingsView()) {
+                    SettingsRowView(
+                        title: "Privacy",
+                        icon: "lock.fill",
+                        color: .green
+                    )
                 }
-                .listRowBackground(Color(.systemBackground))
                 
-                Section {
-                    Button(action: { showingLogoutAlert = true }) {
-                        SettingsRowView(
-                            title: "Sign Out",
-                            icon: "arrow.right.circle.fill",
-                            color: .red,
-                            showChevron: true
-                        )
+                NavigationLink(destination: AppearanceSettingsView()) {
+                    SettingsRowView(
+                        title: "Appearance",
+                        icon: "paintbrush.fill",
+                        color: .purple
+                    )
+                }
+            } header: {
+                Text("Settings")
+            }
+            .listRowBackground(Color(.systemBackground))
+            
+            // Sign Out Section
+            Section {
+                Button(action: { showingLogoutAlert = true }) {
+                    SettingsRowView(
+                        title: "Sign Out",
+                        icon: "arrow.right.circle.fill",
+                        color: .red,
+                        showChevron: true
+                    )
+                }
+            }
+            .listRowBackground(Color(.systemBackground))
+        }
+        .navigationTitle("Profile")
+        .alert("Sign Out", isPresented: $showingLogoutAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Sign Out", role: .destructive) {
+                Task {
+                    do {
+                        try await authManager.signOut()
+                    } catch {
+                        errorMessage = error.localizedDescription
+                        showingErrorAlert = true
                     }
                 }
-                .listRowBackground(Color(.systemBackground))
             }
-            .navigationTitle("Profile")
-            .listStyle(.insetGrouped)
-            .alert("Sign Out", isPresented: $showingLogoutAlert) {
-                Button("Cancel", role: .cancel) { }
-                Button("Sign Out", role: .destructive) {
-                    try? authManager.signOut()
-                }
-            } message: {
-                Text("Are you sure you want to sign out?")
-            }
+        } message: {
+            Text("Are you sure you want to sign out?")
+        }
+        .alert("Error", isPresented: $showingErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
         }
     }
 }

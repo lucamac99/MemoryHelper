@@ -24,77 +24,76 @@ struct MemoryExercisesView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 25) {
-                    // Category selector
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(ExerciseCategory.allCases, id: \.self) { category in
-                                CategoryButton(
-                                    category: category,
-                                    isSelected: selectedCategory == category
-                                ) {
-                                    withAnimation {
-                                        selectedCategory = category
-                                    }
+        ScrollView {
+            VStack(spacing: 25) {
+                // Category selector
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(ExerciseCategory.allCases, id: \.self) { category in
+                            CategoryButton(
+                                category: category,
+                                isSelected: selectedCategory == category
+                            ) {
+                                withAnimation {
+                                    selectedCategory = category
                                 }
                             }
                         }
-                        .padding(.horizontal)
                     }
-                    .padding(.vertical, 8)
-                    
-                    // Stats overview (only if there are completed exercises)
-                    if !progressManager.exerciseStats.isEmpty {
-                        ExerciseStatsView()
-                    }
-                    
-                    // Exercise list
-                    VStack(alignment: .leading) {
-                        Text("Available Exercises")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .padding(.horizontal)
-                        
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 160))], spacing: 16) {
-                            ForEach(filteredExercises) { exercise in
-                                NavigationLink(destination: exerciseDestination(for: exercise)) {
-                                    ExerciseCard(
-                                        exercise: exercise,
-                                        stats: progressManager.exerciseStats[exercise.id]
-                                    )
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Why Train Your Memory?")
-                            .font(.headline)
-                        
-                        Text("Regular memory training has been shown to improve cognitive function, enhance focus, and may help reduce the risk of cognitive decline. These exercises are based on scientifically validated approaches.")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .background(Color(.systemGray6).opacity(0.5))
-                    .cornerRadius(12)
                     .padding(.horizontal)
-                    .padding(.bottom)
                 }
-                .padding(.vertical)
-            }
-            .navigationTitle("Memory Training")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: MemoryProgressView()) {
-                        Label("Progress", systemImage: "chart.bar.fill")
-                    }
+                .padding(.vertical, 8)
+                
+                // Stats overview (only if there are completed exercises)
+                if !progressManager.exerciseStats.isEmpty {
+                    ExerciseStatsView()
                 }
+                
+                // Exercise list
+                ExerciseListView(selectedCategory: selectedCategory)
             }
         }
+        .navigationTitle("Memory Training")
+    }
+}
+
+struct ExerciseListView: View {
+    let selectedCategory: MemoryExercisesView.ExerciseCategory
+    @ObservedObject private var progressManager = ExerciseProgressManager.shared
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("Available Exercises")
+                .font(.title3)
+                .fontWeight(.bold)
+                .padding(.horizontal)
+            
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160))], spacing: 16) {
+                ForEach(filteredExercises) { exercise in
+                    NavigationLink(destination: exerciseDestination(for: exercise)) {
+                        ExerciseCard(
+                            exercise: exercise,
+                            stats: progressManager.exerciseStats[exercise.id]
+                        )
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+        
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Why Train Your Memory?")
+                .font(.headline)
+            
+            Text("Regular memory training has been shown to improve cognitive function, enhance focus, and may help reduce the risk of cognitive decline. These exercises are based on scientifically validated approaches.")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color(.systemGray6).opacity(0.5))
+        .cornerRadius(12)
+        .padding(.horizontal)
+        .padding(.bottom)
     }
     
     private var filteredExercises: [MemoryExercise] {
@@ -121,7 +120,6 @@ struct MemoryExercisesView: View {
         case "numberMnemonics":
             NumberMnemonicsExerciseView()
         default:
-            // Placeholder for exercises not yet implemented
             ComingSoonExerciseView(exercise: exercise)
         }
     }
