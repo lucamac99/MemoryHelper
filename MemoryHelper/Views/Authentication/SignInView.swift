@@ -1,5 +1,7 @@
 import SwiftUI
 import FirebaseAuth
+import AuthenticationServices
+import CryptoKit
 
 struct SignInView: View {
     @StateObject private var authManager = AuthenticationManager.shared
@@ -12,6 +14,9 @@ struct SignInView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     
+    // For Apple Sign In
+    @State private var currentNonce: String?
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -22,11 +27,7 @@ struct SignInView: View {
                         .scaledToFit()
                         .frame(width: 120, height: 120)
                         .padding(.top, 40)
-                        .shadow(color: .gray.opacity(0.2), radius: 10, x: 0, y: 5)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 30)
-                                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
-                        )
+                        .padding(.bottom, 10)
                     
                     Text("Memory Helper")
                         .font(.system(size: 32, weight: .bold))
@@ -83,6 +84,24 @@ struct SignInView: View {
                     }
                     .padding(.horizontal)
                     
+                    // Sign in with Apple
+                    SignInWithAppleButton(
+                        .signIn,
+                        onRequest: { request in
+                            // Generate a nonce for the request
+                            let nonce = randomNonceString()
+                            currentNonce = nonce
+                            request.requestedScopes = [.fullName, .email]
+                            request.nonce = sha256(nonce)
+                        },
+                        onCompletion: { result in
+                            handleAppleSignInResult(result)
+                        }
+                    )
+                    .frame(height: 50)
+                    .padding(.horizontal)
+                    .cornerRadius(12)
+                    
                     // Google Sign In
                     Button {
                         Task {
@@ -130,6 +149,7 @@ struct SignInView: View {
             }
             .navigationBarHidden(true)
         }
+        .navigationViewStyle(.stack)
         .sheet(isPresented: $showingSignUp) {
             SignUpView()
         }
@@ -154,6 +174,106 @@ struct SignInView: View {
                 showingAlert = true
             }
         }
+    }
+    
+    private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            // Process the authorization result directly
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let identityToken = appleIDCredential.identityToken,
+                  let tokenString = String(data: identityToken, encoding: .utf8),
+                  let nonce = currentNonce else {
+                alertMessage = "Could not get Apple ID credentials"
+                showingAlert = true
+                return
+            }
+            
+            // Use the credential to sign in
+            let credential = OAuthProvider.credential(
+                withProviderID: "apple.com",
+                idToken: tokenString,
+                rawNonce: nonce
+            )
+            
+            // Sign in to Firebase with the credential
+            Task {
+                do {
+                    let authResult = try await Auth.auth().signIn(with: credential)
+                    
+                    // Update user's display name if this is a new user
+                    if let fullName = appleIDCredential.fullName,
+                       let givenName = fullName.givenName ?? fullName.nickname,
+                       let familyName = fullName.familyName,
+                       authResult.additionalUserInfo?.isNewUser == true {
+                        
+                        let displayName = [givenName, familyName].joined(separator: " ")
+                        let changeRequest = authResult.user.createProfileChangeRequest()
+                        changeRequest.displayName = displayName
+                        try await changeRequest.commitChanges()
+                    }
+                    
+                    // Update the auth manager's state
+                    await MainActor.run {
+                        authManager.user = authResult.user
+                        authManager.isAuthenticated = true
+                    }
+                    
+                } catch {
+                    await MainActor.run {
+                        alertMessage = error.localizedDescription
+                        showingAlert = true
+                    }
+                }
+            }
+            
+        case .failure(let error):
+            alertMessage = error.localizedDescription
+            showingAlert = true
+        }
+    }
+    
+    // Generate a random nonce for Apple Sign In
+    private func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var result = ""
+        var remainingLength = length
+        
+        while remainingLength > 0 {
+            let randoms: [UInt8] = (0 ..< 16).map { _ in
+                var random: UInt8 = 0
+                let errorCode = SecRandomCopyBytes(kSecRandomDefault, 1, &random)
+                if errorCode != errSecSuccess {
+                    fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+                }
+                return random
+            }
+            
+            randoms.forEach { random in
+                if remainingLength == 0 {
+                    return
+                }
+                
+                if random < charset.count {
+                    result.append(charset[Int(random)])
+                    remainingLength -= 1
+                }
+            }
+        }
+        
+        return result
+    }
+    
+    // Hash the nonce with SHA256 to use with Apple Sign In
+    private func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        let hashString = hashedData.compactMap {
+            String(format: "%02x", $0)
+        }.joined()
+        
+        return hashString
     }
 }
 

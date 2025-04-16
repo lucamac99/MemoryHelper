@@ -61,6 +61,7 @@ struct ForgotPasswordView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .alert(isSuccess ? "Success" : "Error", isPresented: $showingAlert) {
             Button("OK") {
                 if isSuccess {

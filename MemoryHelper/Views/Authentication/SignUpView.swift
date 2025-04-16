@@ -71,6 +71,7 @@ struct SignUpView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .alert("Error", isPresented: $showingAlert) {
             Button("OK", role: .cancel) {}
         } message: {

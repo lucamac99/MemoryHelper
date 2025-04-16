@@ -168,4 +168,11 @@ class AuthenticationManager: ObservableObject {
             }
         }
     }
+}
+
+// Extension for nil check on empty strings
+extension String {
+    func nilIfEmpty() -> String? {
+        return self.isEmpty ? nil : self
+    }
 } 
