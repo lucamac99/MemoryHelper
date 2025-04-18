@@ -10,6 +10,10 @@ class FirebaseConfig {
             #if DEBUG
             print("Firebase successfully configured")
             #endif
+        } else {
+            #if DEBUG
+            print("Firebase already configured, skipping initialization")
+            #endif
         }
     }
 } 

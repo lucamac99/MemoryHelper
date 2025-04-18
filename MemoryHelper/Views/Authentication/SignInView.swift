@@ -166,8 +166,8 @@ struct SignInView: View {
     private func signIn() {
         authManager.signIn(email: email, password: password) { success, errorMessage in
             if success {
-                // Sign in successful, no need to do anything here
-                // The AuthenticationManager already updates isAuthenticated
+                // Sign in successful - ensure we navigate to Home
+                TabSelectionManager.shared.navigateTo(viewName: "home")
             } else if let errorMessage = errorMessage {
                 // Show alert with error message
                 alertMessage = errorMessage
@@ -191,7 +191,7 @@ struct SignInView: View {
             
             // Use the credential to sign in
             let credential = OAuthProvider.credential(
-                withProviderID: "apple.com",
+                providerID: AuthProviderID.apple,
                 idToken: tokenString,
                 rawNonce: nonce
             )
@@ -217,6 +217,8 @@ struct SignInView: View {
                     await MainActor.run {
                         authManager.user = authResult.user
                         authManager.isAuthenticated = true
+                        authManager.initialView = "home" // Set initial view to home
+                        TabSelectionManager.shared.navigateTo(viewName: "home")
                     }
                     
                 } catch {

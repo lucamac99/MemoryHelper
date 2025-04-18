@@ -69,7 +69,7 @@ struct ProfileView: View {
             Button("Sign Out", role: .destructive) {
                 Task {
                     do {
-                        try await authManager.signOut()
+                        try authManager.signOut()
                     } catch {
                         errorMessage = error.localizedDescription
                         showingErrorAlert = true

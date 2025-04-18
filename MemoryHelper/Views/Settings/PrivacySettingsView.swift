@@ -110,7 +110,7 @@ struct PrivacySettingsView: View {
         do {
             try await Auth.auth().currentUser?.delete()
             try Auth.auth().signOut()
-            try await authManager.signOut()
+            try authManager.signOut()
             
             // 4. Dismiss the current view and return to authentication
             DispatchQueue.main.async {

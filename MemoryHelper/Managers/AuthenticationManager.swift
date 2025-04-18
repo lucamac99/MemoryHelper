@@ -31,11 +31,15 @@ class AuthenticationManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var initialView: String = "home" // Default view after authentication
     
+    // Store the auth state listener handle
+    private var authStateListener: AuthStateDidChangeListenerHandle?
+    
     init() {
         user = Auth.auth().currentUser
         isAuthenticated = user != nil
         
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        // Store the listener handle
+        authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             self?.user = user
             self?.isAuthenticated = user != nil
         }
@@ -60,7 +64,7 @@ class AuthenticationManager: ObservableObject {
             // Check if this is a new user (by creation date)
             let creationDate = user.metadata.creationDate
             let lastSignInDate = user.metadata.lastSignInDate
-            let isNewUser = creationDate?.timeIntervalSince1970 == lastSignInDate?.timeIntervalSince1970
+            _ = creationDate?.timeIntervalSince1970 == lastSignInDate?.timeIntervalSince1970
             
             // If this is a new user account, reset onboarding
             //if isNewUser {

@@ -52,7 +52,7 @@ struct HeaderView: View {
                 HStack {
                     Text("Welcome back,")
                         .font(.headline)
-                    Text(authManager.user?.email?.components(separatedBy: "@").first ?? "User")
+                    Text(getUserName())
                         .font(.headline.bold())
                     Spacer()
                     
@@ -72,6 +72,23 @@ struct HeaderView: View {
                 .shadow(color: .gray.opacity(0.2), radius: 4))
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func getUserName() -> String {
+        guard let user = authManager.user else {
+            return "User"
+        }
+        
+        if let email = user.email, !email.isEmpty {
+            let username = email.components(separatedBy: "@").first ?? "User"
+            return username
+        }
+        
+        if let displayName = user.displayName, !displayName.isEmpty {
+            return displayName
+        }
+        
+        return "User"
     }
 }
 

@@ -28,16 +28,34 @@ class ExerciseProgressManager: ObservableObject {
     }
     
     private func loadStats() {
-        if let data = UserDefaults.standard.data(forKey: "exerciseStats") {
-            if let decoded = try? JSONDecoder().decode([String: ExerciseStat].self, from: data) {
+        do {
+            if let data = UserDefaults.standard.data(forKey: "exerciseStats") {
+                let decoded = try JSONDecoder().decode([String: ExerciseStat].self, from: data)
                 exerciseStats = decoded
+                #if DEBUG
+                print("Successfully loaded exercise stats")
+                #endif
             }
+        } catch {
+            // If there's a decoding error, reset stats instead of crashing
+            exerciseStats = [:]
+            #if DEBUG
+            print("Error loading exercise stats: \(error.localizedDescription)")
+            #endif
+            
+            // Remove corrupted data
+            UserDefaults.standard.removeObject(forKey: "exerciseStats")
         }
     }
     
     private func saveStats() {
-        if let encoded = try? JSONEncoder().encode(exerciseStats) {
+        do {
+            let encoded = try JSONEncoder().encode(exerciseStats)
             UserDefaults.standard.set(encoded, forKey: "exerciseStats")
+        } catch {
+            #if DEBUG
+            print("Error saving exercise stats: \(error.localizedDescription)")
+            #endif
         }
     }
 }

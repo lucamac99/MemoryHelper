@@ -72,7 +72,7 @@ struct StatisticsView: View {
         .onAppear {
             loadEntries()
         }
-        .onChange(of: timeRange) { _ in
+        .onChange(of: timeRange) { oldValue, newValue in
             loadEntries()
         }
     }
@@ -238,10 +238,12 @@ struct MoodChart: View {
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
-                                    let x = value.location.x - geometry[proxy.plotAreaFrame].origin.x
-                                    guard let date: Date = proxy.value(atX: x) else { return }
-                                    selectedDate = date
-                                    showingDetailPopover = true
+                                    if let plotFrame = proxy.plotFrame {
+                                        let x = value.location.x - geometry[plotFrame].origin.x
+                                        guard let date: Date = proxy.value(atX: x) else { return }
+                                        selectedDate = date
+                                        showingDetailPopover = true
+                                    }
                                 }
                                 .onEnded { _ in
                                     selectedDate = nil

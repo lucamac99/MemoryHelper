@@ -476,4 +476,29 @@ class TabSelectionManager: ObservableObject {
     @Published var selectedTab: Int = 0
     
     static let shared = TabSelectionManager()
+    
+    init() {
+        // Initialize based on AuthenticationManager's initialView
+        if AuthenticationManager.shared.initialView == "home" {
+            selectedTab = 0
+        }
+    }
+    
+    // Method to set tab based on view name
+    func navigateTo(viewName: String) {
+        switch viewName {
+        case "home":
+            selectedTab = 0
+        case "memories":
+            selectedTab = 1
+        case "training":
+            selectedTab = 2
+        case "stats":
+            selectedTab = 3
+        case "profile":
+            selectedTab = 4
+        default:
+            selectedTab = 0
+        }
+    }
 } 
